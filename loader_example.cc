@@ -10,6 +10,10 @@
 #include <fstream>
 #include <iostream>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 static std::string GetFilePathExtension(const std::string &FileName) {
   if (FileName.find_last_of(".") != std::string::npos)
     return FileName.substr(FileName.find_last_of(".") + 1);
@@ -852,6 +856,12 @@ static void Dump(const tinygltf::Model &model) {
   }
 }
 
+#ifdef __EMSCRIPTEN__
+#define CWD "/working/"
+#else
+#define CWD ""
+#endif
+
 int main(int argc, char **argv) {
   if (argc < 2) {
     printf("Needs input.gltf\n");
@@ -874,17 +884,24 @@ int main(int argc, char **argv) {
   gltf_ctx.SetStoreOriginalJSONForExtrasAndExtensions(
       store_original_json_for_extras_and_extensions);
 
+#ifdef __EMSCRIPTEN__
+  EM_ASM(
+          FS.mkdir("/working");
+          FS.mount(NODEFS, { root: "." }, "/working");
+        );
+#endif
+
   bool ret = false;
   if (ext.compare("glb") == 0) {
     std::cout << "Reading binary glTF" << std::endl;
     // assume binary glTF.
     ret = gltf_ctx.LoadBinaryFromFile(&model, &err, &warn,
-                                      input_filename.c_str());
+                                      std::string(CWD) + input_filename.c_str());
   } else {
     std::cout << "Reading ASCII glTF" << std::endl;
     // assume ascii glTF.
     ret =
-        gltf_ctx.LoadASCIIFromFile(&model, &err, &warn, input_filename.c_str());
+        gltf_ctx.LoadASCIIFromFile(&model, &err, &warn, std::string(CWD) + input_filename.c_str());
   }
 
   if (!warn.empty()) {

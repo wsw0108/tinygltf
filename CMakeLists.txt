@@ -4,6 +4,8 @@ PROJECT (tinygltf)
 
 SET(CMAKE_CXX_STANDARD 11)
 
+#SET(CMAKE_EXECUTABLE_SUFFIX ".html")
+
 option(TINYGLTF_BUILD_LOADER_EXAMPLE "Build loader_example" ON)
 option(TINYGLTF_BUILD_GL_EXAMPLES "Build GL exampels(requires glfw, OpenGL, etc)" OFF)
 option(TINYGLTF_BUILD_VALIDATOR_EXAMPLE "Build validator example" OFF)
@@ -13,6 +15,9 @@ if (TINYGLTF_BUILD_LOADER_EXAMPLE)
   ADD_EXECUTABLE ( loader_example
     loader_example.cc
     )
+  if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+    TARGET_LINK_LIBRARIES(loader_example nodefs.js)
+  endif()
 endif (TINYGLTF_BUILD_LOADER_EXAMPLE)
 
 if (TINYGLTF_BUILD_GL_EXAMPLES)
